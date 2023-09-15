@@ -197,6 +197,11 @@ class Message(db.Model):
         nullable=False,
     )
 
+    like_count = db.Column(
+        db.Integer,
+        default=0
+    )
+
     user = db.relationship('User')
 
 

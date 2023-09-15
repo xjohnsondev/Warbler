@@ -196,6 +196,11 @@ nav + .container {
   margin-left: 10px;
 }
 
+.header{
+  height: 360px;
+  width: 100vw;
+}
+
 #warbler-hero {
   height: 360px;
   margin-top: -16px;
@@ -541,3 +546,4 @@ p.card-bio {
 .message-404 .form-inline input {
   flex: 1;
 }
+

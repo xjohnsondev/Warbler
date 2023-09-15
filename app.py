@@ -1,11 +1,11 @@
 import os
-
+import pdb
 from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm
-from models import db, connect_db, User, Message
+from forms import UserAddForm, LoginForm, MessageForm, UserDetailsForm
+from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -18,10 +18,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 toolbar = DebugToolbarExtension(app)
 
+app.app_context().push()
 connect_db(app)
 
 
@@ -112,8 +113,10 @@ def login():
 @app.route('/logout')
 def logout():
     """Handle logout of user."""
-
-    # IMPLEMENT THIS
+    
+    session.pop(CURR_USER_KEY)
+    flash(f"Signed out {g.user.username}!", "success")
+    return redirect('/')
 
 
 ##############################################################################
@@ -141,7 +144,6 @@ def users_show(user_id):
     """Show user profile."""
 
     user = User.query.get_or_404(user_id)
-
     # snagging messages in order from the database;
     # user.messages won't be in order by default
     messages = (Message
@@ -211,7 +213,20 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
+    user = User.query.get(session[CURR_USER_KEY])
+    form = UserDetailsForm()
+    if form.validate_on_submit():
+        password = form.password.data
+        auth = User.authenticate(user.username, password)
+        if auth:
+            user.username = form.username.data if form.username.data else user.username
+            user.email = form.email.data if form.email.data else user.email
+            user.location = form.location.data if form.location.data else None
+            user.bio = form.bio.data if form.bio.data else user.bio
+            user.header_img = form.header_img.data if form.header_img.data else None
+            db.session.commit()
+            return redirect(f"{user.id}")
+    return render_template('users/edit.html', user=user, form=form)
 
 
 @app.route('/users/delete', methods=["POST"])
@@ -228,6 +243,27 @@ def delete_user():
     db.session.commit()
 
     return redirect("/signup")
+
+@app.route('/users/add_like', methods=['GET','POST'])
+def like_post():
+    """Handle like/ unlike on posts"""
+
+    msg = Message.query.get(request.form['msg_id'])
+    user = User.query.get(request.form['user_id'])
+
+    if msg not in user.likes:
+        new_like = Likes(user_id=user.id, message_id=msg.id)
+        
+        db.session.add(new_like)
+        db.session.commit()
+        flash('message liked', 'primary')
+        msg.like_count = Likes.query.filter_by(message_id=msg.id).count()
+    else:
+        existing_like = Likes.query.filter_by(user_id=user.id, message_id=msg.id).first()
+        db.session.delete(existing_like)
+        flash('message unliked', 'danger')
+        db.session.commit()
+    return redirect('/')
 
 
 ##############################################################################
@@ -290,6 +326,8 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
+    if CURR_USER_KEY in session:
+        user = User.query.get(session[CURR_USER_KEY])
 
     if g.user:
         messages = (Message
@@ -297,8 +335,11 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        
+        for msg in messages:
+            msg.like_count = Likes.query.filter_by(message_id=msg.id).count()
 
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, user=user)
 
     else:
         return render_template('home-anon.html')
