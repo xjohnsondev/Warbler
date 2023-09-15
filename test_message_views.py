@@ -114,7 +114,7 @@ class MessageViewTestCase(TestCase):
             self.assertIsNone(m)
 
     def test_unauthorized_message_delete(self):
-
+ 
         # A second user that will try to delete the message
         u = User.signup(username="unauthorized-user",
                         email="testtest@test.com",

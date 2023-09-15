@@ -22,7 +22,7 @@ app.config['WTF_CSRF_ENABLED'] = False
 
 class MessageViewTestCase(TestCase):
     """Test views for messages."""
-
+ 
     def setUp(self):
         """Create test client, add sample data."""
 

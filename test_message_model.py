@@ -20,7 +20,7 @@ class UserModelTestCase(TestCase):
         """Create test client, add sample data."""
         db.drop_all()
         db.create_all()
-
+ 
         self.uid = 94566
         u = User.signup("testing", "testing@test.com", "password", None)
         u.id = self.uid

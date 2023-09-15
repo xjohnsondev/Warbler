@@ -95,7 +95,7 @@ class UserModelTestCase(TestCase):
 
         self.assertTrue(self.u2.is_followed_by(self.u1))
         self.assertFalse(self.u1.is_followed_by(self.u2))
-
+ 
     ####
     #
     # Signup Tests

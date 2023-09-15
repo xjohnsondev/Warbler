@@ -64,7 +64,7 @@ class User(db.Model):
         nullable=False,
         unique=True,
     )
-
+ 
     username = db.Column(
         db.Text,
         nullable=False,
