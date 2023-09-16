@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, EmailField
+from wtforms import StringField, PasswordField, TextAreaField
 from wtforms.validators import DataRequired,InputRequired, Email, Length
 
 
@@ -29,7 +29,7 @@ class UserDetailsForm(FlaskForm):
     """Update User Details"""
 
     username = StringField('Username')
-    email = EmailField('Email', validators=[Email("Please enter a valid email")])
+    email = StringField('Email', validators=[Email("Please enter a valid email")])
     location = StringField('Location')
     bio = StringField('Bio')       
     image_url = StringField('Image URL')
